@@ -1,0 +1,294 @@
+PARSER_BEGIN(Karloff)
+import java.io.*;
+public class Karloff {
+
+  public static void main(String args[]) throws ParseException,IOException {
+    
+ Karloff parser = new Karloff(new FileInputStream(args[0]));
+ parser.Karloff();
+  }
+
+}
+
+PARSER_END(Karloff)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+TOKEN :
+{
+  <MAIN: "main">
+| <VOID: "void">
+| <NEWVAR: "newVar">
+| <TIPOINT: "int">
+| <TIPOBOOL: "bool">
+| <IF: "if">
+| <THEN: "then">
+| <WHILE: "while">
+| <REPEAT: "repeat">
+| <UNTIL: "until">
+| <RETURN: "return">
+| <PRINT: "System.output">
+| <FUNC: "func">
+| <TRUE: "true">
+| <FALSE: "false">
+}
+
+TOKEN :
+{
+  <IGUAL: "==">
+| <SOMA: "+">
+| <SUB: "-">
+| <MULT: "*">
+| <DIV: "/">
+| <AND: "&">
+| <OR: "|">
+| <MENOR: "<">
+| <MAIOR: ">">
+}
+
+TOKEN :
+{
+ <ACHAVES: "{">
+| <FCHAVES: "}">
+| <PV: ";">
+| <APARENTESES: "(">
+| <FPARENTESES: ")">
+| <ATRIB: "=">
+| <VIRGULA: ",">
+}
+
+TOKEN :
+{
+<ID: ["a"-"z","A"-"Z"] (["a"-"z","A"-"Z","0"-"9"])* ("_" (["a"-"z","A"-"Z","0"-"9"])+ )*>
+| <NUM: (["0"-"9"])+ ("." (["0"-"9"])+ )? ("E" ("+" | "-")? (["0"-"9"])+ )?>
+}
+
+
+// --------------- Funcoes ---------------------
+
+//KARLOFF -> MAIN FUNC?
+
+//MAIN -> "void" "main" "{" VARDECL SEQCOMANDOS "}"
+
+//VARDECL -> VARDECL "newVar" TIPO ID ";" | vazio
+
+//TIPO -> "int" | "bool"
+
+//SEQCOMANDOS ->  SEQCOMANDOS COMANDO | vazio
+
+//SEQCOMANDOSL -> COMANDO SEQCOMANDOSL | vazio
+
+
+//COMANDO -> ID "=" EXP ";"
+//| ID "(" LISTAEXP? ")" ";"
+//| "if" "(" EXP ")" "then" "{" SEQCOMANDOS "}" ";"
+//| "while" "(" EXP ")" "{" SEQCOMANDOS "}" ";"
+//| "repeat" "{" SEQCOMANDOS "}" "until" "(" EXP ")" ";"
+//| "return" EXP ";"
+//| "System.output" "(" EXP ")" ";"
+
+//EXP -> "(" EXP OP EXP ")" | FATOR
+
+
+//FATOR -> ID | ID "(" LISTAEXP? ")"
+//| NUM | "true" | "false"
+
+//OP -> "+" | "-" | "*" | "/" | "&" | "|" | "<" | ">" | "=="
+
+//LISTAEXP -> EXP | LISTAEXP "," EXP
+
+// FUNC -> FUNC "func" TIPO ID "(" LISTAARG? ")" "{" VARDECL SEQCOMANDOS "}"
+// | "func" TIPO ID "(" LISTAARG? ")" "{" VARDECL SEQCOMANDOS "}"
+
+//LISTAARG -> TIPO ID | LISTAARG "," TIPO ID
+
+
+
+
+// --------------- Fim Funcoes ---------------------
+
+// KARLOFF -> MAIN FUNC?
+
+void Karloff () :
+{}
+{
+
+Main() (Func())?
+<EOF> 
+
+}
+
+//MAIN -> "void" "main" "{" VARDECL SEQCOMANDOS "}"
+
+void Main () :
+{}
+{
+
+<VOID> <MAIN> <ACHAVES> Vardecl() Seqcomandos() <FCHAVES>
+
+}
+
+//SEQCOMANDOSL -> COMANDO SEQCOMANDOSL | vazio
+
+void Seqcomandos ():
+{}
+{
+  (Comando() Seqcomandos())? 
+}
+
+// COMANDO -> ID "=" EXP ";"
+// | ID "(" LISTAEXP? ")" ";"
+// | "if" "(" EXP ")" "then" "{" SEQCOMANDOS "}" ";"
+// | "while" "(" EXP ")" "{" SEQCOMANDOS "}" ";"
+// | "repeat" "{" SEQCOMANDOS "}" "until" "(" EXP ")" ";"
+// | "return" EXP ";"
+// | "System.output" "(" EXP ")" ";"
+
+void Comando():
+{}
+{
+  <ID> Comando_L()
+  | <IF> <APARENTESES> Exp() <FPARENTESES> <THEN> <ACHAVES> Seqcomandos() <FCHAVES> <PV>
+  | <WHILE> <APARENTESES> Exp() <FPARENTESES> <ACHAVES> Seqcomandos() <FCHAVES> <PV>
+  | <REPEAT> <ACHAVES> Seqcomandos() <FCHAVES> <UNTIL> <APARENTESES> Exp() <FPARENTESES> <PV>
+  | <RETURN> Exp() <PV>
+  | <PRINT> <APARENTESES> Exp() <FPARENTESES> <PV>
+}
+
+void Comando_L():
+{}
+{
+  <ATRIB> Exp() <PV>
+  | <APARENTESES> (ListaExp())? <FPARENTESES> <PV>
+}
+
+// FUNC -> FUNC "func" TIPO ID "(" LISTAARG? ")" "{" VARDECL SEQCOMANDOS "}"
+// | "func" TIPO ID "(" LISTAARG? ")" "{" VARDECL SEQCOMANDOS "}"
+
+//FUNC -> "func" TIPO ID "(" LISTAARG? ")" "{" VARDECL SEQCOMANDOS "}" FUNC_L
+//FUNC_L -> "func" TIPO ID "(" LISTAARG? ")" "{" VARDECL SEQCOMANDOS "}" FUNC_L | vazio
+
+void Func():
+{}
+{
+  <FUNC> Tipo() <ID> <APARENTESES> (ListaArg())?  <FPARENTESES> <ACHAVES> Vardecl() Seqcomandos() <FCHAVES> Func_L()
+}
+
+void Func_L():
+{}
+{
+  (<FUNC> Tipo() <ID> <APARENTESES> (ListaArg())?  <FPARENTESES> <ACHAVES> Vardecl() Seqcomandos() <FCHAVES> Func_L())?
+}
+
+// VARDECL -> "newVar" TIPO ID ";" VARDECL | vazio
+
+void Vardecl () :
+{}
+{
+
+(<NEWVAR> Tipo() <ID> <PV> Vardecl())?
+
+}
+
+// TIPO -> "int" | "bool"
+
+void Tipo () :
+{}
+{
+
+<TIPOINT> | <TIPOBOOL>
+
+}
+
+//EXP -> "(" EXP OP EXP ")" | FATOR
+
+void Exp () :
+{}
+{
+
+<APARENTESES> Exp() Op() Exp() <FPARENTESES> 
+| Fator()
+
+}
+
+//FATOR -> ID | ID "(" LISTAEXP? ")" | NUM | "true" | "false"
+
+void Fator () :
+{}
+{
+
+<ID> Fator_L()
+| <NUM>
+| <TRUE>
+| <FALSE>
+
+}
+
+void Fator_L ():
+{}
+{
+  (<APARENTESES> (ListaExp())? <FPARENTESES>) ?
+}
+
+//OP -> "+" | "-" | "*" | "/" | "&" | "|" | "<" | ">" | "=="
+
+void Op () :
+{}
+{
+
+<SOMA>
+| <SUB>
+| <MULT>
+| <DIV>
+| <AND>
+| <OR>
+| <MAIOR>
+| <MENOR>
+| <IGUAL>
+
+}
+
+//LISTAEXP -> EXP | LISTAEXP "," EXP
+
+//LISTAEXP -> EXP LISTAEXP_L
+//LISTAEXP_L -> "," EXP LISTAEXP_L | vazio
+
+void ListaExp () :
+{}
+{
+
+Exp() ListaExp_L()
+
+}
+
+void ListaExp_L () :
+{}
+{
+
+(<VIRGULA> Exp() ListaExp_L())?
+
+}
+
+//LISTAARG -> TIPO ID | LISTAARG "," TIPO ID
+
+void ListaArg () :
+{}
+{
+
+Tipo() <ID> ListaArg_L()
+
+}
+
+void ListaArg_L () :
+{}
+{
+
+(<VIRGULA> Tipo() <ID> ListaArg_L())?
+
+}
