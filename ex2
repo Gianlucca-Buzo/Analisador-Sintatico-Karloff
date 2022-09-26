@@ -1,0 +1,21 @@
+void main {
+  newVar int a;
+
+  a = fatorial(8);
+  System.output(a);
+}
+
+func int fatorial (int num) {
+  newVar int temp;
+  temp = (num - 1);
+  if (( num > 1 )) 
+  then {
+    return (num * fatorial(temp));
+  };
+
+  if ((num == 1)) 
+  then {
+    return 1;
+  };
+
+}
